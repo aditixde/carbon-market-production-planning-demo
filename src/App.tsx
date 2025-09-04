@@ -95,7 +95,7 @@ function App() {
           <div className="flex justify-between items-center text-sm text-slate-600">
             <div>
               <a 
-                href="https://github.com/aditixde/" 
+                href="https://github.com/aditixde/carbon-market-production-planning-demo" 
                 target="_blank" 
                 rel="noopener noreferrer"
                 className="text-blue-600 hover:text-blue-800 hover:underline transition-colors"

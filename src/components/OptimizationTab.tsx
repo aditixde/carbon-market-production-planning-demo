@@ -7,7 +7,7 @@ import { validateParameters, ValidationError } from '../utils/validation';
 
 interface OptimizationTabProps {
   parameters: Parameters;
-  appState: { E: number; K: number; T: number };
+  appState: { E: number; K: number; T: number; mode: 'single' | 'multi' };
   onResultsChange: (results: OptimizationResults | null) => void;
 }
 
@@ -33,11 +33,12 @@ export const OptimizationTab: React.FC<OptimizationTabProps> = ({
         return;
       }
 
-      // Run optimization
-      const solver = new MILPSolver(appState.E, appState.K, appState.T, parameters);
+      // Create MILP solver
+      const solver = new MILPSolver(appState.E, appState.K, appState.T, parameters, appState.mode);
       
       // Simulate solving time
-      await new Promise(resolve => setTimeout(resolve, 2000));
+      const solvingTime = appState.E > 100 ? 5000 : appState.E > 10 ? 3000 : 2000;
+      await new Promise(resolve => setTimeout(resolve, solvingTime));
       
       const results = solver.solve();
       onResultsChange(results);
@@ -55,20 +56,26 @@ export const OptimizationTab: React.FC<OptimizationTabProps> = ({
     <div className="max-w-4xl mx-auto space-y-8">
       <div className="text-center">
         <h2 className="text-3xl font-bold text-slate-800 mb-4">
-          MILP Optimization Engine
+          {appState.mode === 'single' ? 'Single Facility' : 'Multi-Facility'} Optimization Engine
         </h2>
         <p className="text-slate-600 text-lg">
-          Solve the mixed-integer linear programming model for optimal steel production under CCTS
+          {appState.mode === 'single' 
+            ? 'Optimize production decisions for your steel facility under CCTS'
+            : 'Simulate market-wide optimization across multiple steel facilities'}
         </p>
       </div>
 
       {/* Model Summary */}
       <div className="bg-gradient-to-r from-blue-50 to-slate-50 rounded-xl p-8 border border-blue-200">
-        <h3 className="text-xl font-semibold mb-6 text-slate-800">Model Summary</h3>
+        <h3 className="text-xl font-semibold mb-6 text-slate-800">
+          {appState.mode === 'single' ? 'Facility' : 'Market'} Model Summary
+        </h3>
         <div className="grid md:grid-cols-3 gap-6">
           <div className="text-center">
             <div className="text-3xl font-bold text-blue-600 mb-2">{appState.E}</div>
-            <div className="text-slate-600">Steel Facilities</div>
+            <div className="text-slate-600">
+              {appState.mode === 'single' ? 'Steel Facility' : 'Steel Facilities'}
+            </div>
           </div>
           <div className="text-center">
             <div className="text-3xl font-bold text-green-600 mb-2">{appState.K}</div>
@@ -79,6 +86,18 @@ export const OptimizationTab: React.FC<OptimizationTabProps> = ({
             <div className="text-slate-600">Time Periods</div>
           </div>
         </div>
+        
+        {appState.mode === 'multi' && appState.E > 50 && (
+          <div className="mt-6 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
+            <div className="flex items-center gap-2 text-yellow-800">
+              <AlertCircle className="w-5 h-5" />
+              <span className="font-medium">Large Scale Model</span>
+            </div>
+            <p className="text-sm text-yellow-700 mt-1">
+              This model has {appState.E} facilities. Optimization may take longer to complete.
+            </p>
+          </div>
+        )}
       </div>
 
       {/* Objective Function Display */}
@@ -89,10 +108,11 @@ export const OptimizationTab: React.FC<OptimizationTabProps> = ({
           <div className="space-y-1 text-slate-600 ml-4">
             <div>Σ<sub>i,t</sub> f<sub>i</sub> × oper<sub>i,t</sub> (fixed operating costs)</div>
             <div>+ Σ<sub>i,k,t</sub> c<sub>i,k</sub> × x<sub>i,k,t</sub> (variable production costs)</div>
-            <div>+ Σ<sub>i,t</sub> p<sub>t</sub> × (buy<sub>i,t</sub> - sell<sub>i,t</sub>) (trading costs)</div>
+            <div>+ Σ<sub>i,t</sub> p<sub>i,t</sub> × (buy<sub>i,t</sub> - sell<sub>i,t</sub>) (trading costs)</div>
             <div>+ Σ<sub>i,t</sub> h<sub>t</sub> × C<sub>i,t</sub> (carbon holding costs)</div>
             <div>+ Σ<sub>i,t</sub> π × unmet<sub>i,t</sub> (penalty costs)</div>
             <div>+ Σ<sub>i,k,τ</sub> ic<sub>i,k</sub> × build<sub>i,k,τ</sub> (investment costs)</div>
+            <div className="text-red-600">Subject to: Σ<sub>k,τ</sub> ic<sub>i,k</sub> × build<sub>i,k,τ</sub> ≤ invest_cap<sub>i</sub> ∀i (investment constraint)</div>
           </div>
         </div>
       </div>
@@ -132,7 +152,7 @@ export const OptimizationTab: React.FC<OptimizationTabProps> = ({
           {isRunning ? (
             <>
               <Loader className="w-6 h-6 animate-spin" />
-              Running Optimization...
+              Running MILP Optimization...
             </>
           ) : (
             <>
@@ -141,6 +161,12 @@ export const OptimizationTab: React.FC<OptimizationTabProps> = ({
             </>
           )}
         </button>
+        
+        {appState.E > 100 && (
+          <p className="text-sm text-slate-600">
+            💡 Large models with {appState.E} facilities may take longer to optimize
+          </p>
+        )}
       </div>
 
       {/* Last Run Info */}
@@ -158,15 +184,17 @@ export const OptimizationTab: React.FC<OptimizationTabProps> = ({
         <h3 className="text-lg font-semibold mb-4 text-slate-700">Model Description</h3>
         <div className="prose prose-sm text-slate-600">
           <p>
-            This MILP model optimizes steel production decisions across multiple facilities, technologies, 
-            and time periods under India's Carbon Credit Trading Scheme (CCTS). The model considers:
+            This optimization model supports both single-facility planning and multi-facility market simulation 
+            for steel production under India's Carbon Credit Trading Scheme (CCTS). The model considers:
           </p>
           <ul className="mt-3 space-y-1">
             <li>Production planning and technology investment decisions</li>
+            <li>Investment capital constraints per facility</li>
+            <li>Firm-specific strategic orientations and carbon price forecasts</li>
             <li>Carbon emissions trading and banking strategies</li>
-            <li>Technology Performance Standards (TPS) compliance</li>
+            <li>Dynamic free allocations based on baseline and target intensities</li>
             <li>Resource constraints for scrap steel and CCUS capacity</li>
-            <li>Operating budgets and demand fulfillment requirements</li>
+            {appState.mode === 'multi' && <li>Emergent market phenomena and price volatility simulation</li>}
           </ul>
         </div>
       </div>

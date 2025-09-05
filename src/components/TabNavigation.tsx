@@ -1,19 +1,24 @@
 import React from 'react';
 import { clsx } from 'clsx';
-import { Settings, Play, BarChart3 } from 'lucide-react';
+import { Settings, Play, BarChart3, TrendingUp } from 'lucide-react';
 
 interface TabNavigationProps {
   activeTab: string;
   onTabChange: (tab: string) => void;
+  mode: 'single' | 'multi';
 }
 
-const tabs = [
+const baseTabs = [
   { id: 'parameters', label: 'Parameters', icon: Settings },
   { id: 'optimization', label: 'Run Optimization', icon: Play },
   { id: 'results', label: 'Results', icon: BarChart3 },
 ];
 
-export const TabNavigation: React.FC<TabNavigationProps> = ({ activeTab, onTabChange }) => {
+const marketTab = { id: 'market', label: 'Market Simulation', icon: TrendingUp };
+
+export const TabNavigation: React.FC<TabNavigationProps> = ({ activeTab, onTabChange, mode }) => {
+  const tabs = mode === 'multi' ? [...baseTabs, marketTab] : baseTabs;
+
   return (
     <nav className="border-b border-slate-200 bg-white">
       <div className="flex space-x-8 px-6">

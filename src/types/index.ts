@@ -2,6 +2,28 @@ export interface AppState {
   E: number; // Number of facilities
   K: number; // Number of technologies
   T: number; // Number of time periods
+  mode: 'single' | 'multi'; // Operating mode
+  randomSeed: number; // For reproducible random generation
+}
+
+export interface FirmAttributes {
+  planningHorizon: number;
+  investibleCapital: number;
+  strategicOrientation: 'cost-minimizer' | 'green-leader' | 'balanced';
+  baselineIntensity: number;
+}
+
+export interface Technology {
+  id: number;
+  name: string;
+  variableCost: number;
+  emissionsIntensity: number;
+  capacityPerUnit: number;
+  gestationPeriod: number;
+  investmentCost: number;
+  earliestBuild: number;
+  scrapUse: number;
+  ccusUse: number;
 }
 
 export interface Parameters {
@@ -32,10 +54,10 @@ export interface Parameters {
   // Benchmark emissions (per time period)
   beta: number[];
   
-  // Carbon prices (per time period)
-  pt: number[];
+  // Carbon prices (facility x time) - now per facility
+  pt: number[][];
   
-  // Free allocations (facility x time)
+  // Free allocations (facility x time) - now calculated dynamically
   Ai: number[][];
   
   // Holding costs (per time period)
@@ -67,6 +89,13 @@ export interface Parameters {
   
   // Big-M parameter
   M: number;
+  
+  // New parameters
+  baselineIntensity: number[]; // per facility
+  targetIntensity: number[]; // per time period
+  investCap: number[]; // per facility
+  firmAttributes: FirmAttributes[]; // per facility
+  technologies: Technology[]; // configurable technology database
 }
 
 export interface OptimizationResults {
@@ -83,10 +112,28 @@ export interface OptimizationResults {
     unmet: number[][]; // unmet[i][t]
     emissions: number[][]; // Emis[i][t]
     output: number[][]; // Out[i][t]
+    allocations: number[][]; // calculated Ai[i][t]
   };
   metrics: {
     totalEmissions: number;
     totalUnmet: number;
     totalCosts: number[];
+    totalAllocations: number;
+    marketBalance: number; // surplus/deficit
+    priceVolatility: number;
+  };
+  firmResults?: OptimizationResults[]; // For multi-facility mode
+}
+
+export interface MarketSimulation {
+  totalEmissions: number;
+  totalAllocations: number;
+  marketBalance: number;
+  priceVolatility: number;
+  priceForecasts: number[][];
+  aggregateMetrics: {
+    avgEmissionsIntensity: number;
+    totalInvestment: number;
+    technologyMix: { [key: string]: number };
   };
 }

@@ -208,10 +208,42 @@ export const ParametersTab: React.FC<ParametersTabProps> = ({
                         </span>
                       </td>
                       <td className="border border-slate-300 px-3 py-2 text-center">
-                        {attr.investibleCapital.toLocaleString()}
+                        <input
+                          type="number"
+                          step="1000"
+                          value={attr.investibleCapital}
+                          onChange={(e) => {
+                            const newParams = { ...parameters };
+                            newParams.firmAttributes = [...parameters.firmAttributes];
+                            newParams.firmAttributes[i] = {
+                              ...newParams.firmAttributes[i],
+                              investibleCapital: parseFloat(e.target.value) || 0
+                            };
+                            newParams.investCap = [...parameters.investCap];
+                            newParams.investCap[i] = parseFloat(e.target.value) || 0;
+                            onParameterChange(newParams);
+                          }}
+                          className="w-full px-2 py-1 text-center text-sm border-none bg-transparent focus:bg-white focus:ring-2 focus:ring-blue-500 rounded"
+                        />
                       </td>
                       <td className="border border-slate-300 px-3 py-2 text-center">
-                        {attr.baselineIntensity.toFixed(2)}
+                        <input
+                          type="number"
+                          step="0.01"
+                          value={attr.baselineIntensity}
+                          onChange={(e) => {
+                            const newParams = { ...parameters };
+                            newParams.firmAttributes = [...parameters.firmAttributes];
+                            newParams.firmAttributes[i] = {
+                              ...newParams.firmAttributes[i],
+                              baselineIntensity: parseFloat(e.target.value) || 0
+                            };
+                            newParams.baselineIntensity = [...parameters.baselineIntensity];
+                            newParams.baselineIntensity[i] = parseFloat(e.target.value) || 0;
+                            onParameterChange(newParams);
+                          }}
+                          className="w-full px-2 py-1 text-center text-sm border-none bg-transparent focus:bg-white focus:ring-2 focus:ring-blue-500 rounded"
+                        />
                       </td>
                     </tr>
                   ))}
@@ -368,39 +400,18 @@ export const ParametersTab: React.FC<ParametersTabProps> = ({
           />
         </div>
 
-        {/* New baseline and target intensity parameters */}
-        <div className="grid md:grid-cols-2 gap-6">
-          <div className="bg-white rounded-lg shadow-sm border border-slate-200 p-6">
-            <h3 className="text-lg font-semibold mb-4 text-slate-700">Baseline Intensity (tCO2/unit)</h3>
-            <ParameterTable
-              data={parameters.baselineIntensity.map(val => [val])}
-              rowHeaders={mode === 'single' ? ['Facility'] : Array.from({ length: E }, (_, i) => `Facility ${i + 1}`)}
-              columnHeaders={['Baseline']}
-              onCellChange={(row, col, value) => handleParameterUpdate('baselineIntensity', [row], value)}
-            />
-          </div>
 
-          <div className="bg-white rounded-lg shadow-sm border border-slate-200 p-6">
-            <h3 className="text-lg font-semibold mb-4 text-slate-700">Target Intensity (tCO2/unit)</h3>
-            <ParameterTable
-              data={parameters.targetIntensity.map(val => [val])}
-              rowHeaders={Array.from({ length: T }, (_, t) => `Period ${t + 1}`)}
-              columnHeaders={['Target']}
-              onCellChange={(row, col, value) => handleParameterUpdate('targetIntensity', [row], value)}
-            />
-          </div>
-        </div>
-
-        {/* Investment capital constraints */}
+        {/* Target intensity parameters */}
         <div className="bg-white rounded-lg shadow-sm border border-slate-200 p-6">
-          <h3 className="text-lg font-semibold mb-4 text-slate-700">Investment Capital Constraints ($)</h3>
+          <h3 className="text-lg font-semibold mb-4 text-slate-700">Target Intensity (tCO2/unit)</h3>
           <ParameterTable
-            data={parameters.investCap.map(val => [val])}
-            rowHeaders={mode === 'single' ? ['Facility'] : Array.from({ length: E }, (_, i) => `Facility ${i + 1}`)}
-            columnHeaders={['Capital']}
-            onCellChange={(row, col, value) => handleParameterUpdate('investCap', [row], value)}
+            data={parameters.targetIntensity.map(val => [val])}
+            rowHeaders={Array.from({ length: T }, (_, t) => `Period ${t + 1}`)}
+            columnHeaders={['Target']}
+            onCellChange={(row, col, value) => handleParameterUpdate('targetIntensity', [row], value)}
           />
         </div>
+
 
         {/* Technology-dependent parameters */}
         <div className="grid md:grid-cols-2 gap-6">

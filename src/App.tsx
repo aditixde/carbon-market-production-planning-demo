@@ -4,25 +4,44 @@ import { TabNavigation } from './components/TabNavigation';
 import { ParametersTab } from './components/ParametersTab';
 import { OptimizationTab } from './components/OptimizationTab';
 import { ResultsTab } from './components/ResultsTab';
+import { MarketSimulationTab } from './components/MarketSimulationTab';
 import { createDefaultParameters } from './data/defaults';
 import { AppState, Parameters, OptimizationResults } from './types';
 
 function App() {
-  const [appState, setAppState] = useState<AppState>({ E: 2, K: 3, T: 4 });
+  const [appState, setAppState] = useState<AppState>({ 
+    E: 2, 
+    K: 3, 
+    T: 4, 
+    mode: 'multi',
+    randomSeed: 42
+  });
   const [parameters, setParameters] = useState<Parameters>(
-    createDefaultParameters(2, 3, 4)
+    createDefaultParameters(2, 3, 4, 'multi')
   );
   const [activeTab, setActiveTab] = useState('parameters');
   const [results, setResults] = useState<OptimizationResults | null>(null);
 
   // Update parameters when app state changes
   useEffect(() => {
-    setParameters(createDefaultParameters(appState.E, appState.K, appState.T));
+    setParameters(createDefaultParameters(
+      appState.E, 
+      appState.K, 
+      appState.T, 
+      appState.mode,
+      appState.randomSeed
+    ));
     setResults(null); // Clear previous results
-  }, [appState.E, appState.K, appState.T]);
+  }, [appState.E, appState.K, appState.T, appState.mode, appState.randomSeed]);
 
   const handleReset = () => {
-    setParameters(createDefaultParameters(appState.E, appState.K, appState.T));
+    setParameters(createDefaultParameters(
+      appState.E, 
+      appState.K, 
+      appState.T, 
+      appState.mode,
+      appState.randomSeed
+    ));
     setResults(null);
   };
 
@@ -52,6 +71,13 @@ function App() {
             appState={appState}
           />
         );
+      case 'market':
+        return appState.mode === 'multi' ? (
+          <MarketSimulationTab
+            results={results}
+            appState={appState}
+          />
+        ) : null;
       default:
         return null;
     }
@@ -77,13 +103,19 @@ function App() {
               </p>
             </div>
             <div className="text-right text-sm text-slate-500">
-              <div>Model: {appState.E}F × {appState.K}T × {appState.T}P</div>
+              <div>
+                {appState.mode === 'single' ? 'Single Facility' : `${appState.E} Facilities`} × {appState.K} Technologies × {appState.T} Periods
+              </div>
               <div className="text-xs">Facilities × Technologies × Periods</div>
             </div>
           </div>
         </header>
 
-        <TabNavigation activeTab={activeTab} onTabChange={setActiveTab} />
+        <TabNavigation 
+          activeTab={activeTab} 
+          onTabChange={setActiveTab}
+          mode={appState.mode}
+        />
 
         <main className="flex-1 overflow-auto">
           <div className="p-6">
@@ -95,7 +127,7 @@ function App() {
           <div className="flex justify-between items-center text-sm text-slate-600">
             <div>
               <a 
-                href="https://github.com/aditixde/carbon-market-production-planning-demo" 
+                href="https://github.com/aditixde/" 
                 target="_blank" 
                 rel="noopener noreferrer"
                 className="text-blue-600 hover:text-blue-800 hover:underline transition-colors"
